@@ -3,18 +3,20 @@ package com.example.performance
 import android.Manifest
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
 import com.acesso.acessobio_android.AcessoBioListener
 import com.acesso.acessobio_android.iAcessoBioSelfie
 import com.acesso.acessobio_android.onboarding.AcessoBio
@@ -23,12 +25,17 @@ import com.acesso.acessobio_android.onboarding.camera.selfie.SelfieCameraListene
 import com.acesso.acessobio_android.services.dto.ErrorBio
 import com.acesso.acessobio_android.services.dto.ResultCamera
 import com.example.performance.ui.theme.PerformanceTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
+
+    val test = MutableStateFlow("Teste")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        Log.d("TEST_MEMORY", "onCreate: ${this@MainActivity}")
         setContent {
             Column(
                 modifier = Modifier
@@ -40,20 +47,27 @@ class MainActivity : ComponentActivity() {
 
                 Button(
                     enabled = true,
-                    onClick = { initCamera(this@MainActivity) }
+                    onClick = {
+                        lifecycleScope.launch {
+                            test.emit("Teste")
+                        }
+                        initCamera(this@MainActivity)
+                    }
                 ) {
-                    Text(text = "Button")
+                    Text(text = test.collectAsState().value)
                 }
             }
-//            PerformanceTheme {
-//                Surface(
-//                    modifier = Modifier.fillMaxSize(),
-//                    color = MaterialTheme.colors.background
-//                ) {
-//                    DefaultPreview()
-//                }
-//            }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("TEST_MEMORY", "onResume: ${this@MainActivity}")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("TEST_MEMORY", "onDestroy: ${this@MainActivity}")
     }
 
     private fun initCamera(mainActivity: MainActivity) {
@@ -71,6 +85,10 @@ class MainActivity : ComponentActivity() {
             }
 
             override fun onUserClosedCameraManually() {
+                lifecycleScope.launch {
+                    test.emit(getString(R.string.test_string))
+                }
+                Log.d("TEST_MEMORY", "onUserClosedCameraManually: ${this@MainActivity}")
                 Log.d("CAMERA", "onUserClosedCameraManually")
             }
 
@@ -88,6 +106,10 @@ class MainActivity : ComponentActivity() {
                 override fun onCameraReady(p0: UnicoCheckCameraOpener.Selfie) {
                     p0.open(object : iAcessoBioSelfie {
                         override fun onSuccessSelfie(p0: ResultCamera?) {
+                            lifecycleScope.launch {
+                                test.emit(getString(R.string.test_string_2))
+                            }
+                            Log.d("TEST_MEMORY", "onSuccessSelfie: ${this@MainActivity}")
                             Log.d("CAMERA", "onSuccessSelfie")
                         }
 
